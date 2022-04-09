@@ -1,91 +1,33 @@
-/***************************************************************************************
-OPENMAZE - Random, Single-Solution 3D Mazes in OpenGL
-
-MinGW Build example:
-
-C:\Users\Beau\Documents\openmaze>set path=c:\mingw\bin;%PATH%
-
-C:\Users\Beau\Documents\openmaze>c:\mingw\bin\c++.exe c:\users\beau\documents\op
-enmaze\openmaze.cpp c:\users\beau\documents\openmaze\glew.c c:\users\beau\docume
-nts\openmaze\glut32.lib -lglu32 -lopengl32 -static-libstdc++ -static-libgcc  -oc
-:\users\beau\documents\openmaze\openmaze.exe
-
-(c) 2014 James Beau Wilkinson
-
-Licensed under the GNU Public License (GPL v3+)
-***************************************************************************************/
-
 // Libraries; we are using GLU, GLUT, and GLEW, along with C stdlib.
-
-#define GLEW_STATIC 
+#pragma once
 #pragma comment (lib, "glew32s.lib")
+
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <windows.h> //Seems necessary for GLUT
 #include <GL/glu.h> 
 #include <GL/glut.h>
 #include <stdlib.h>
-#include <fstream>
 #include <cmath>
 #include <ctime>
+#include "Constants.h"
+#include "mazeParser.h"
 
-
-//Constants
-
-const GLint CONTROLLER_PLAY=250;
-const GLint WINDOW_STARTX=20;
-const GLint WINDOW_STARTY=20;
-const GLint ESCAPE=27; /* ASCII code for the escape key. */
-const GLint TEXTURE_SIZE=256;
-const GLint SKY_SIZE = 512;
-const GLint MAX_APPERROR=64;
-const GLint BMP_HEADER_SIZE=54; //Assumed 24-bit depth
-const GLint WINDOW_MARGIN=100;
-const GLfloat MAZE_EXTREME_LEFT=-5.0f;
-const GLfloat MAZE_EXTREME_TOP=-9.0f;
-const GLfloat HALF_CUBE=1.25f;
-const GLfloat FULL_CUBE=HALF_CUBE+HALF_CUBE;
-const GLfloat START_X_AT=-10.0f;
-const GLfloat START_Y_AT=0.0f;
-const GLfloat START_ROT=270.0f;
-const GLfloat START_CAMERA_Y=5.0f;
-const GLfloat CAMERA_SINK=0.05f;
-const GLfloat VIEW_FIELD=45.0f;
-const GLfloat NEAR_Z=0.1f;
-const GLfloat FAR_Z=1000.0f;
-const GLfloat SKY_DISTANCE=250.0f;
-const GLfloat LEFTMOST_CUBE_CENTER=MAZE_EXTREME_LEFT+HALF_CUBE;
-const GLfloat COLLIDE_MARGIN=0.15625;  //To keep from looking inside the cubes
-const GLfloat ROTATE_MOUSE_SENSE=0.000002f;
-const GLfloat ROTATE_KEY_SENSE=0.08f;
-const GLfloat WALK_MOUSE_SENSE=0.00003f;
-const GLfloat WALK_KEY_SENSE=0.2;
-const GLfloat WALK_MOUSE_REVERSE_SENSE= 0.00002f; //Slower when backpedaling
-const GLfloat WALK_KEY_REVERSE_SENSE=0.14f;
-const GLfloat BOUNCEBACK=5.0f; //1.0f means none (just reverse collision)
-const GLfloat SKY_SCALE=6.0f;
-
-#define TEXTURE_FILE "./resources/bmp/wall1.bmp"
-#define SKY_FILE "./resources/bmp/sky.bmp"
-#define FLOOR_FILE "./resources/bmp/floor.bmp"
+using namespace std;
 
 //Maze compile-time parameters
-const GLint XSIZE=8;
-const GLint YSIZE=8;
-
-//Logic constants for map contents
-const GLint SOLUTION_PATH=2;
-const GLint FALSE_PATH=1;
-const GLint NO_PATH=0;
+GLint XSIZE = 8;
+GLint YSIZE = 8;
+const GLint MAX_APPERROR = 64;
 
 // File-level variables... these are all position-state / input state variables. OpenGL 
 //  callbacks with defined signatures must edit these variables, so there's no easy 
 //  alternative to giving them file-level scope.
-static GLfloat x_at=START_X_AT; 
-static GLfloat y_at=START_Y_AT;
-static GLfloat rot=START_ROT;
-static GLint xin=0,yin=0;
-static GLfloat camera_y=START_CAMERA_Y;
+static GLfloat x_at = START_X_AT;
+static GLfloat y_at = START_Y_AT;
+static GLfloat rot = START_ROT;
+static GLint xin = 0, yin = 0;
+static GLfloat camera_y = START_CAMERA_Y;
 
 // Functions
 
@@ -103,19 +45,7 @@ GLint windowheight()
  return ret;
 }
 
-GLint ((*(maze_innards()))[YSIZE])  //Returns a pointer to the variable portion of the 
-{                                   // maze, in 2D format.
-
- //Just a simple way to surround maze w/ walls... see below...
- static int whole_maze[XSIZE+2][YSIZE+2]={SOLUTION_PATH};
-
- // "Innards" exclude the outer wall... it's worth noting that the array mapping
- //   function inherent to the initialization just above is completely 
- //   abandoned by the cast operation below. However, the overall purpose of this "for"
- //   block (i.e. to surround maze_innards with walls, which is assumed by the
- //   solve/obfuscate algorithm) is preserved. 
- return (int(*)[YSIZE])(&whole_maze[0][1]);
-}
+vector<vector<GLint>>maze_innards;
 
 //App-level "init" function
 void initgl(GLint width, GLint height) 
@@ -129,6 +59,8 @@ void initgl(GLint width, GLint height)
  glMatrixMode(GL_PROJECTION);
  gluPerspective(VIEW_FIELD,(GLfloat)width/(GLfloat)height,NEAR_Z,FAR_Z); 
  glMatrixMode(GL_MODELVIEW);
+
+ parseMaze(XSIZE, YSIZE);
 }
 
 /* The function called when our window is resized (not supported with our textur. sys.)*/
@@ -299,24 +231,27 @@ void floor(GLuint grnd)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glBegin(GL_QUADS);
     glTexCoord2d(100.0, 100.0);
-    glVertex3f(200, -HALF_CUBE, -200);
+    glVertex3f(MAZE_EXTREME_LEFT/2, -HALF_CUBE, -MAZE_EXTREME_LEFT / 2);
     glTexCoord2d(0.0, 100.0);
-    glVertex3f(-200, -HALF_CUBE, -200);
+    glVertex3f(-MAZE_EXTREME_LEFT/2, -HALF_CUBE, -MAZE_EXTREME_LEFT / 2);
     glTexCoord2d(0.0, 0.0);
-    glVertex3f(-200, -HALF_CUBE, 200);
+    glVertex3f(-MAZE_EXTREME_LEFT/2, -HALF_CUBE, MAZE_EXTREME_LEFT / 2);
     glTexCoord2d(100.0, 0.0);
-    glVertex3f(200, -HALF_CUBE, 200);
+    glVertex3f(MAZE_EXTREME_LEFT/2, -HALF_CUBE, MAZE_EXTREME_LEFT / 2);
     glEnd();
 }
 
 void make_solution() //We don't use that extra +1 in the Y-dimension
-{                                     
+{    
+    maze_innards.resize(XSIZE);
+
     for (int x = 0; x < XSIZE; x++) {
+        maze_innards[x].resize(YSIZE);
         for (int y = 0; y < YSIZE; y++) {
-            maze_innards()[x][y] = SOLUTION_PATH;
+            maze_innards[x][y] = SOLUTION_PATH;
         }
     }
-    maze_innards()[3][3] = NO_PATH;
+    maze_innards[3][3] = NO_PATH;
 }
 
 void print_maze() //Renders the necessary OpenGL cubes
@@ -336,7 +271,7 @@ void print_maze() //Renders the necessary OpenGL cubes
  {
   for(x=0; x<XSIZE ; ++x )
   {
-   if((maze_innards())[x][y]==NO_PATH)
+   if(maze_innards[x][y]==NO_PATH)
    {
     cube_vertical(LEFTMOST_CUBE_CENTER+((GLfloat)x*FULL_CUBE),
     0.0,
@@ -372,7 +307,7 @@ bool collide() //Is player in a state of collision?
  {
   for(x=0; x<XSIZE ; ++x )
   {
-   if((maze_innards())[x][y]==NO_PATH)
+   if(maze_innards[x][y]==NO_PATH)
    {
     if( x_at>=MAZE_EXTREME_LEFT+x*FULL_CUBE-COLLIDE_MARGIN && 
       x_at<=MAZE_EXTREME_LEFT+FULL_CUBE+x*FULL_CUBE+COLLIDE_MARGIN && 
@@ -408,15 +343,15 @@ void move(GLfloat amt) //Move, incorporating collision and bounceback
 void drawscene()
 {  
  static bool init=0;
- static GLuint mesh; /*Texture for the cube*/
+ static GLuint walls; /*Texture for the cube*/
  static GLuint haze; /*Texture for the sky*/
  static GLuint grnd; /*Texture for the sky*/
  
  if(!init)
  { 
   init=1;
-  mesh=maketex(TEXTURE_FILE,TEXTURE_SIZE,TEXTURE_SIZE);
-  haze=maketex(SKY_FILE,SKY_SIZE,SKY_SIZE);
+  walls=maketex(TEXTURE_FILE,TEXTURE_SIZE,TEXTURE_SIZE);
+  haze=maketex(SKY_FILE,SKY_SIZE_X,SKY_SIZE_Y);
   grnd=maketex(FLOOR_FILE, TEXTURE_SIZE, TEXTURE_SIZE);
  }
  
@@ -433,7 +368,7 @@ void drawscene()
  glLoadIdentity(); // Make sure we're no longer rotated.
  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); // Clear screen and depth buffer
  sky(haze); //Draw sky
- glBindTexture(GL_TEXTURE_2D,mesh);
+ glBindTexture(GL_TEXTURE_2D,walls);
  gluLookAt(x_at,camera_y,y_at,x_at+cos(rot),camera_y,y_at+sin(rot),0.0,1.0,0.0);
  if(camera_y>0.0) camera_y-=CAMERA_SINK;
  glBegin(GL_QUADS); // Draw the cube (6 faces)
