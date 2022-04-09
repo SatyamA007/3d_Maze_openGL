@@ -1,0 +1,43 @@
+# textures.  the last one is always the texture of the floor
+TEXTURES 2  # number of textures
+1 wall1.tif
+2 floor.tif
+
+
+# cell size
+CELL 10
+
+# height of walls
+HEIGHT 10
+
+
+# dimensions of scene, in number of cells
+DIMENSIONS 5 5
+
+FLOORPLAN
+1  0  1  1  0
+1  0  1  1  1
+0  0  0  0  0
+1  1  1  0  1
+0  1  0  0  0
+1  0  0  1  1
+1  1  1  0  0
+0  0  0  0  1
+1  1  1  1  0
+0  0  0  0  0
+
+
+# end of the file
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
