@@ -298,6 +298,61 @@ void move(GLfloat amt) //Move, incorporating collision and bounceback
   } 
  }
 
+
+int start = clock();
+int endTime = clock()+185000;
+int sec, mn = 0, hour = 0;
+bool gameOver = false;
+std::string strSec, strMn, strHour;
+#include <sstream>
+
+void drawText(int x, int y, string text = "not") {
+
+    std::string str;
+    if (text == "not") {
+
+        int n = ((endTime - clock()) / 1000);
+
+        sec = n % 60;
+        mn = n / 60;
+        hour = n / 3600;
+        std::stringstream ss;
+        ss << sec;
+        strSec = ss.str();
+        ss.str(std::string());
+        ss.clear();
+        ss << mn;
+        strMn = ss.str();
+        ss.str(std::string());
+        ss.clear();
+        ss << hour;
+        strHour = ss.str();
+        str = strHour + "::" + strMn + "::" + strSec;
+        if (n < 0) gameOver = true;
+    }
+    else {
+        str = text;
+    }
+    int length = str.length();
+    glMatrixMode(GL_PROJECTION);
+    double* matrix = new double[16];
+    glGetDoublev(GL_PROJECTION_MATRIX, matrix);
+    glLoadIdentity();
+    glOrtho(0, 800, 0, 600, -5, 5);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glPushMatrix();
+    glLoadIdentity();
+    glRasterPos2i(x, y);
+    for (int i = 0; i < length; i++) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, (int)str[i]);
+    }
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixd(matrix);
+    glMatrixMode(GL_MODELVIEW);
+}
+
 void drawscene()
 {  
  static bool init=0;
@@ -329,6 +384,15 @@ void drawscene()
  glLoadIdentity(); // Make sure we're no longer rotated.
  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); // Clear screen and depth buffer
  sky(haze); //Draw sky
+ 
+
+ if (!gameOver) {
+     drawText(700 - 100, 500, "Time Remaining: ");
+     drawText(700, 500);
+ }
+ else
+     drawText(700, 500, "Game Over!");
+ 
 
  gluLookAt(x_at,camera_y,y_at,x_at+cos(rot_x),camera_y+sin(rot_y), y_at + sin(rot_x), 0.0, 1.0, 0.0);
  if(camera_y>0.0) camera_y-=CAMERA_SINK;
