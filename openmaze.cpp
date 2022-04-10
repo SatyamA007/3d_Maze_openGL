@@ -1,6 +1,7 @@
 // Libraries; we are using GLU, GLUT, and GLEW, along with C stdlib.
 #pragma once
 #pragma comment (lib, "glew32s.lib")
+#define _USE_MATH_DEFINES
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -12,6 +13,7 @@
 #include <ctime>
 #include "Constants.h"
 #include "mazeParser.h"
+#include <sstream>
 
 using namespace std;
 
@@ -19,16 +21,21 @@ using namespace std;
 GLint XSIZE = 8;
 GLint YSIZE = 8;
 const GLint MAX_APPERROR = 64;
+int startTime = clock(), endTime = clock() + 185000;
+int sec, mn = 0, hour = 0;
+bool gameOver = false, youWon = false;
+std::string strSec, strMn, strHour;
 
 // File-level variables... these are all position-state / input state variables. OpenGL 
 //  callbacks with defined signatures must edit these variables, so there's no easy 
 //  alternative to giving them file-level scope.
 static GLfloat x_at = START_X_AT;
 static GLfloat y_at = START_Y_AT;
-static GLfloat rot_x = START_ROT;
+static GLfloat rot_x = -M_PI_2;
 static GLint xin = 0, yin = 0;
 static GLfloat camera_y = START_CAMERA_Y;
-static GLfloat rot_y = 0;
+static GLfloat rot_y = -M_PI_2;
+
 
 // Functions
 
@@ -202,13 +209,13 @@ void floor(GLuint grnd)
     
     glBegin(GL_QUADS);
     glTexCoord2d(10.0, 10.0);
-    glVertex3f(MAZE_EXTREME_LEFT+ XSIZE*FULL_CUBE - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP);
+    glVertex3f(MAZE_EXTREME_LEFT+ XSIZE*FULL_CUBE, -HALF_CUBE, MAZE_EXTREME_TOP);
     glTexCoord2d(0.0, 10.0);
-    glVertex3f(MAZE_EXTREME_LEFT - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP);
+    glVertex3f(MAZE_EXTREME_LEFT, -HALF_CUBE, MAZE_EXTREME_TOP);
     glTexCoord2d(0.0, 0.0);
-    glVertex3f(MAZE_EXTREME_LEFT - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP + YSIZE * FULL_CUBE);
+    glVertex3f(MAZE_EXTREME_LEFT, -HALF_CUBE, MAZE_EXTREME_TOP + YSIZE * FULL_CUBE);
     glTexCoord2d(10.0, 0.0);
-    glVertex3f(MAZE_EXTREME_LEFT + XSIZE * FULL_CUBE - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP + YSIZE * FULL_CUBE);
+    glVertex3f(MAZE_EXTREME_LEFT + XSIZE * FULL_CUBE, -HALF_CUBE, MAZE_EXTREME_TOP + YSIZE * FULL_CUBE);
     glEnd();
 }
 
@@ -240,18 +247,22 @@ bool collide() //Is player in a state of collision?
 {
  int x,y;
 
- //Invisible Walls...
- if(x_at>=MAZE_EXTREME_LEFT-COLLIDE_MARGIN - FULL_CUBE && 
-   x_at<=MAZE_EXTREME_LEFT+(1+XSIZE)*FULL_CUBE+COLLIDE_MARGIN)
+ if (gameOver || youWon) return false;
+
+ //Got out of the maze!!!
+ if(x_at>=MAZE_EXTREME_LEFT-COLLIDE_MARGIN - HALF_CUBE && 
+   x_at<=MAZE_EXTREME_LEFT+ XSIZE* FULL_CUBE+ HALF_CUBE +COLLIDE_MARGIN)
  {
-  if( y_at<=MAZE_EXTREME_TOP+COLLIDE_MARGIN - FULL_CUBE|| 
-    y_at>=MAZE_EXTREME_TOP+(1+YSIZE)*FULL_CUBE-COLLIDE_MARGIN)
+  if( y_at<=MAZE_EXTREME_TOP+COLLIDE_MARGIN - HALF_CUBE ||
+    y_at>=MAZE_EXTREME_TOP+YSIZE*FULL_CUBE + HALF_CUBE -COLLIDE_MARGIN)
   {
-   return 1; 
+    youWon = true; camera_y = 0.1; CAMERA_SINK *= -1; rot_y = -M_PI_2;
+    return true;
   }
  }
  else {
-    return 1;
+    youWon = true; camera_y = 0.1; CAMERA_SINK *= -1; rot_y = -M_PI_2;
+    return true;
  }
 
  //Maze proper
@@ -268,8 +279,8 @@ bool collide() //Is player in a state of collision?
              }             
          }
          else if (y%2 == 1 && WALL_TEXTURES[y][x]) {
-             if (x_at + 3.7 <= MAZE_EXTREME_LEFT + x * FULL_CUBE + COLLIDE_MARGIN &&
-                 x_at + 3.7 >= MAZE_EXTREME_LEFT + x * FULL_CUBE - COLLIDE_MARGIN&&
+             if (x_at <= MAZE_EXTREME_LEFT + x * FULL_CUBE + COLLIDE_MARGIN &&
+                 x_at >= MAZE_EXTREME_LEFT + x * FULL_CUBE - COLLIDE_MARGIN&&
                  y_at >= MAZE_EXTREME_TOP + (y/2) * FULL_CUBE - COLLIDE_MARGIN &&
                  y_at <= MAZE_EXTREME_TOP + (y/2 + 1) * FULL_CUBE + COLLIDE_MARGIN) {
                  return 1;
@@ -299,13 +310,6 @@ void move(GLfloat amt) //Move, incorporating collision and bounceback
  }
 
 
-int start = clock();
-int endTime = clock()+185000;
-int sec, mn = 0, hour = 0;
-bool gameOver = false;
-std::string strSec, strMn, strHour;
-#include <sstream>
-
 void drawText(int x, int y, string text = "not") {
 
     std::string str;
@@ -328,7 +332,9 @@ void drawText(int x, int y, string text = "not") {
         ss << hour;
         strHour = ss.str();
         str = strHour + "::" + strMn + "::" + strSec;
-        if (n < 0) gameOver = true;
+        if (n < 0) {
+            gameOver = true;camera_y = 0.1;CAMERA_SINK *= -1; rot_y = rot_x = -M_PI_2;
+        }
     }
     else {
         str = text;
@@ -353,12 +359,29 @@ void drawText(int x, int y, string text = "not") {
     glMatrixMode(GL_MODELVIEW);
 }
 
+void resetGame() {
+    x_at = X_INIT;
+    y_at = Y_INIT;
+    gameOver = youWon = false;
+    
+    startTime = clock(), endTime = clock() + 185000;
+    sec, mn = 0, hour = 0;
+       
+    rot_x = -M_PI_2;
+    xin = 0, yin = 0;
+    camera_y = START_CAMERA_Y;
+    CAMERA_SINK *= -1;
+    rot_y = -M_PI_2;
+}
+
 void drawscene()
 {  
  static bool init=0;
  static GLuint textureNums = TEXTURE_PATHS.size();
  static GLuint* walls = new GLuint[textureNums]; /*Textures for the cube*/
  static GLuint haze; /*Texture for the sky*/
+ static GLuint gover; /*Texture for the sky*/
+ static GLuint ywon; /*Texture for the sky*/
  static GLuint grnd; /*Texture for the sky*/
  
  if(!init)
@@ -367,35 +390,52 @@ void drawscene()
   for(int i=0;i<textureNums;i++)
     walls[i] = maketex(&TEXTURE_PATHS[i][0], TEXTURE_SIZE, TEXTURE_SIZE);
   haze=maketex(SKY_FILE,SKY_SIZE_X,SKY_SIZE_Y);
+  gover = maketex(GOVER_FILE, 800, 512);
+  ywon = maketex(YWON_FILE, 800, 512);
   grnd=walls[textureNums-1];
-  CONTROLLER_PLAY = min(windowwidth(), windowheight())/3.0f;
+  CONTROLLER_PLAY = min(windowwidth(), windowheight())/2.3f;
+  x_at = X_INIT;
+  y_at = Y_INIT;
  }
  
- if(camera_y<=0.0f && abs(xin)>40 && abs(yin) > 40 && abs(xin - windowwidth())>40&&abs(yin - windowheight()) > 40)
+ if(abs(xin)>40 && abs(yin) > 40 && abs(xin - windowwidth())>40&&abs(yin - windowheight()) > 40)
  {
-     cout << xin <<": "<< windowwidth() << "   y= " << yin <<": "<< windowheight() << "\n";
     if (yin<CONTROLLER_PLAY || yin>(windowheight() - CONTROLLER_PLAY))
         rot_y -= (yin - (windowheight() / 2.0f)) * ROTATE_MOUSE_SENSE* windowwidth() / windowheight();
+
+    if (rot_y < 0) rot_y = max(rot_y, -M_PI_2);
+    else rot_y = min(rot_y, M_PI_2);
   
     if(xin<CONTROLLER_PLAY || xin>(windowwidth()-CONTROLLER_PLAY))
         rot_x+=(xin-(windowwidth()/2.0f))*ROTATE_MOUSE_SENSE;
  }
  
  glLoadIdentity(); // Make sure we're no longer rotated.
- glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); // Clear screen and depth buffer
- sky(haze); //Draw sky
- 
+ glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); // Clear screen and depth buffer 
 
- if (!gameOver) {
+
+ if (!gameOver && !youWon) {
+     sky(haze); //Draw sky
      drawText(700 - 100, 500, "Time Remaining: ");
      drawText(700, 500);
  }
- else
-     drawText(700, 500, "Game Over!");
- 
+ else {
+     cout << camera_y << "\n";
+     if (camera_y > 200) resetGame();
+
+     if (gameOver) {
+         sky(gover); //Draw sky
+         drawText(700, 500, "Time's Up!");
+     }
+     else if (youWon) {
+         sky(ywon); //Draw sky
+         drawText(700, 500, "You Won!");
+     }
+} 
 
  gluLookAt(x_at,camera_y,y_at,x_at+cos(rot_x),camera_y+sin(rot_y), y_at + sin(rot_x), 0.0, 1.0, 0.0);
- if(camera_y>0.0) camera_y-=CAMERA_SINK;
+
+ if (camera_y > 0.0) camera_y -= CAMERA_SINK;
 
  print_maze(walls);// Draw the walls
 

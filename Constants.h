@@ -41,12 +41,16 @@ extern GLfloat WALK_MOUSE_REVERSE_SENSE; //Slower when backpedaling
 extern GLfloat WALK_KEY_REVERSE_SENSE;
 extern GLfloat BOUNCEBACK; //1.0f means none (just reverse collision)
 extern GLfloat SKY_SCALE;
+extern GLfloat X_INIT;
+extern GLfloat Y_INIT;
 
 extern std::vector<std::vector<int>> WALL_TEXTURES;
 extern std::vector<std::string> TEXTURE_PATHS;
 
 #define WALL_FILE "./resources/bmp/wall1.bmp"
 #define SKY_FILE "./resources/bmp/sky3.bmp"
+#define GOVER_FILE "./resources/bmp/gover.bmp"
+#define YWON_FILE "./resources/bmp/ywon.bmp"
 #define FLOOR_FILE "./resources/bmp/floor.bmp"
 #define TEXTURE_PATH_PREFIX "./resources/bmp/"
 #define TEXTURE_FILE "./resources/bmp/wall1.bmp"

@@ -90,8 +90,11 @@ void parseMaze(GLint& pXSIZE, GLint& pYSIZE, string maze_path){
 
     pXSIZE = xSize;
     pYSIZE = ySize;
-
+    
     FULL_CUBE = cell;
     HALF_CUBE = cell / 2;
+    LEFTMOST_CUBE_CENTER = MAZE_EXTREME_LEFT + HALF_CUBE;
     WALL_HT = ht;
+    X_INIT = LEFTMOST_CUBE_CENTER + (xSize / 2) * FULL_CUBE;
+    Y_INIT = MAZE_EXTREME_TOP + (ySize / 2) * FULL_CUBE + HALF_CUBE;
 }
