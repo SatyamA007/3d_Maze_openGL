@@ -25,9 +25,10 @@ const GLint MAX_APPERROR = 64;
 //  alternative to giving them file-level scope.
 static GLfloat x_at = START_X_AT;
 static GLfloat y_at = START_Y_AT;
-static GLfloat rot = START_ROT;
+static GLfloat rot_x = START_ROT;
 static GLint xin = 0, yin = 0;
 static GLfloat camera_y = START_CAMERA_Y;
+static GLfloat rot_y = 0;
 
 // Functions
 
@@ -53,7 +54,6 @@ void initgl(GLint width, GLint height)
  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); 
  glClearDepth(1.0);
  glEnable(GL_DEPTH_TEST);
- //glEnable(GL_CULL_FACE);
  glFrontFace(GL_CCW);
  glShadeModel(GL_SMOOTH); 
  glMatrixMode(GL_PROJECTION);
@@ -282,19 +282,19 @@ bool collide() //Is player in a state of collision?
 
 void move(GLfloat amt) //Move, incorporating collision and bounceback
 {
-  x_at+=cos(rot)*amt;
-  y_at+=sin(rot)*amt; 
+  x_at+=cos(rot_x)*amt;
+  y_at+=sin(rot_x)*amt; 
   if(collide()) //Don't let player walk through walls
   {
-   x_at-=BOUNCEBACK*cos(rot)*amt;
-   y_at-=BOUNCEBACK*sin(rot)*amt;
+   x_at-=BOUNCEBACK*cos(rot_x)*amt;
+   y_at-=BOUNCEBACK*sin(rot_x)*amt;
   } 
   if(collide()) //Bounced into another wall... just reverse original move
   {
-   x_at+=BOUNCEBACK*cos(rot)*amt;
-   y_at+=BOUNCEBACK*sin(rot)*amt;
-   x_at-=cos(rot)*amt;
-   y_at-=sin(rot)*amt; 
+   x_at+=BOUNCEBACK*cos(rot_x)*amt;
+   y_at+=BOUNCEBACK*sin(rot_x)*amt;
+   x_at-=cos(rot_x)*amt;
+   y_at-=sin(rot_x)*amt; 
   } 
  }
 
@@ -313,23 +313,24 @@ void drawscene()
     walls[i] = maketex(&TEXTURE_PATHS[i][0], TEXTURE_SIZE, TEXTURE_SIZE);
   haze=maketex(SKY_FILE,SKY_SIZE_X,SKY_SIZE_Y);
   grnd=walls[textureNums-1];
+  CONTROLLER_PLAY = min(windowwidth(), windowheight())/3.0f;
  }
  
- if(camera_y<=0.0f && xin && yin)
- { 
-  if(yin<CONTROLLER_PLAY) 
-   move((yin-windowheight()/2.0f)*-WALK_MOUSE_SENSE); 
-  if(yin>(windowheight()-CONTROLLER_PLAY))
-   move(((windowheight()/2.0f)-yin)*WALK_MOUSE_REVERSE_SENSE);
-  if(xin<CONTROLLER_PLAY || xin>(windowwidth()-CONTROLLER_PLAY))
-   rot+=(xin-(windowwidth()/2.0f))*ROTATE_MOUSE_SENSE;
+ if(camera_y<=0.0f && abs(xin)>40 && abs(yin) > 40 && abs(xin - windowwidth())>40&&abs(yin - windowheight()) > 40)
+ {
+     cout << xin <<": "<< windowwidth() << "   y= " << yin <<": "<< windowheight() << "\n";
+    if (yin<CONTROLLER_PLAY || yin>(windowheight() - CONTROLLER_PLAY))
+        rot_y -= (yin - (windowheight() / 2.0f)) * ROTATE_MOUSE_SENSE* windowwidth() / windowheight();
+  
+    if(xin<CONTROLLER_PLAY || xin>(windowwidth()-CONTROLLER_PLAY))
+        rot_x+=(xin-(windowwidth()/2.0f))*ROTATE_MOUSE_SENSE;
  }
  
  glLoadIdentity(); // Make sure we're no longer rotated.
  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); // Clear screen and depth buffer
  sky(haze); //Draw sky
 
- gluLookAt(x_at,camera_y,y_at,x_at+cos(rot),camera_y,y_at+sin(rot),0.0,1.0,0.0);
+ gluLookAt(x_at,camera_y,y_at,x_at+cos(rot_x),camera_y+sin(rot_y), y_at + sin(rot_x), 0.0, 1.0, 0.0);
  if(camera_y>0.0) camera_y-=CAMERA_SINK;
 
  print_maze(walls);// Draw the walls
@@ -350,9 +351,9 @@ void arrows(GLint key, GLint x, GLint y)
  {
      
   if(key == GLUT_KEY_RIGHT)
-   rot+=ROTATE_KEY_SENSE;
+   rot_x+=ROTATE_KEY_SENSE;
   if(key == GLUT_KEY_LEFT)
-   rot-=ROTATE_KEY_SENSE;
+   rot_x-=ROTATE_KEY_SENSE;
   }
 }
 
@@ -397,7 +398,7 @@ int main(int argc, char **argv)
  glutInitWindowSize(windowwidth(),windowheight()); 
  glutInitWindowPosition(WINDOW_STARTX, WINDOW_STARTY); 
 
- window = glutCreateWindow("openmaze by _beauw_"); 
+ window = glutCreateWindow("openGLmaze by _Satyam_"); 
 
  glutDisplayFunc(&drawscene); 
  glutIdleFunc(&drawscene);
@@ -408,7 +409,6 @@ int main(int argc, char **argv)
  initgl(windowwidth(),windowheight());
  glewInit();
 
- srand(time(0));
  parseMaze(XSIZE,YSIZE, "maze1.txt");
  glutMainLoop(); 
 
