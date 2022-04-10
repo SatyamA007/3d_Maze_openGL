@@ -59,8 +59,6 @@ void initgl(GLint width, GLint height)
  glMatrixMode(GL_PROJECTION);
  gluPerspective(VIEW_FIELD,(GLfloat)width/(GLfloat)height,NEAR_Z,FAR_Z); 
  glMatrixMode(GL_MODELVIEW);
-
- parseMaze(XSIZE, YSIZE);
 }
 
 /* The function called when our window is resized (not supported with our textur. sys.)*/
@@ -145,138 +143,95 @@ GLuint maketex(const char* tfile,GLint xSize,GLint ySize) //returns tex. no.
 
 }
 
-void cube_vertical(GLfloat x, GLfloat y, GLfloat z) //Draws a cube centered at (x,y,z)
+void wall_vertical(GLfloat x, GLfloat y, GLfloat z, GLuint texture = 1) //Draws a cube centered at (x,y,z)
 {
-    float thickness = 0.001f;
- // Top of cube
- //glTexCoord2d(1.0,1.0);
- //glVertex3f(x+thickness, HALF_CUBE,z-HALF_CUBE); // Top Right Of The Quad (Top)
- //glTexCoord2d(0.0,1.0);
- //glVertex3f(x- thickness, HALF_CUBE,z-HALF_CUBE); // Top Left Of The Quad (Top)
- //glTexCoord2d(0.0,0.0);
- //glVertex3f(x- thickness, HALF_CUBE, z+HALF_CUBE); // Bottom Left Of The Quad (Top)
- //glTexCoord2d(1.0,0.0);
- //glVertex3f(x+ thickness, HALF_CUBE, z+HALF_CUBE); // Bottom Right Of The Quad (Top)
+    glBindTexture(GL_TEXTURE_2D, texture);
 
- // Bottom
- //glTexCoord2d(1.0,1.0);
- //glVertex3f(x+ thickness,-HALF_CUBE,z+HALF_CUBE); // Top Right Of The Quad (Bottom)
- //glTexCoord2d(0.0,1.0);
- //glVertex3f(x- thickness,-HALF_CUBE,z+HALF_CUBE); // Top Left Of The Quad (Bottom)
- //glTexCoord2d(0.0,0.0);
- //glVertex3f(x- thickness,-HALF_CUBE,z-HALF_CUBE); // Bottom Left Of The Quad (Bottom)
- //glTexCoord2d(1.0,0.0);
- //glVertex3f(x+ thickness,-HALF_CUBE,z-HALF_CUBE); // Bottom Right Of The Quad (Bottom)
-
- //// Front
- //glTexCoord2d(1.0,1.0);
- //glVertex3f(x+ thickness, HALF_CUBE, z+HALF_CUBE); // Top Right Of The Quad (Front)
- //glTexCoord2d(0.0,1.0); 
- //glVertex3f(x- thickness, HALF_CUBE, z+HALF_CUBE); // Top Left Of The Quad (Front)
- //glTexCoord2d(0.0,0.0); 
- //glVertex3f(x- thickness,-HALF_CUBE, z+HALF_CUBE); // Bottom Left Of The Quad (Front)
- //glTexCoord2d(1.0,0.0);
- //glVertex3f(x+ thickness,-HALF_CUBE, z+HALF_CUBE); // Bottom Right Of The Quad (Front)
-
- //// Back
- //glTexCoord2d(1.0,1.0); 
- //glVertex3f(x- thickness,HALF_CUBE,z-HALF_CUBE); // Top Right Of The Quad (Back)
- //glTexCoord2d(0.0,1.0); 
- //glVertex3f(x+ thickness,HALF_CUBE,z-HALF_CUBE); // Top Left Of The Quad (Back)
- //glTexCoord2d(0.0,0.0); 
- //glVertex3f(x+ thickness,-HALF_CUBE,z-HALF_CUBE); // Bottom Left Of The Quad (Back)
- //glTexCoord2d(1.0,0.0); 
- //glVertex3f(x- thickness,-HALF_CUBE,z-HALF_CUBE); // Bottom Right Of The Quad (Back)
-
- //// left of cube
- //glTexCoord2d(1.0,1.0);
- //glVertex3f(x- thickness, HALF_CUBE,z+HALF_CUBE); // Top Right Of The Quad (Left)
- //glTexCoord2d(0.0,1.0);
- //glVertex3f(x- thickness, HALF_CUBE,z-HALF_CUBE); // Top Left Of The Quad (Left)
- //glTexCoord2d(0.0,0.0);
- //glVertex3f(x- thickness,-HALF_CUBE,z-HALF_CUBE); // Bottom Left Of The Quad (Left)
- //glTexCoord2d(1.0,0.0);
- //glVertex3f(x- thickness,-HALF_CUBE,z+HALF_CUBE); // Bottom Right Of The Quad (Left)
-
- // Right of cube
- glTexCoord2d(1.0,1.0);
- glVertex3f(x+ thickness, HALF_CUBE,z-HALF_CUBE); // Top Right Of The Quad (Right)
- glTexCoord2d(0.0,1.0);
- glVertex3f(x+ thickness, HALF_CUBE,z+HALF_CUBE); // Top Left Of The Quad (Right)
- glTexCoord2d(0.0,0.0);
- glVertex3f(x+ thickness,-HALF_CUBE,z+HALF_CUBE); // Bottom Left Of The Quad (Right)
- glTexCoord2d(1.0,0.0);
- glVertex3f(x+ thickness,-HALF_CUBE,z-HALF_CUBE); // Bottom Right Of The Quad (Right)
-}
-
-void sky(GLuint haze)
-{ //Modelled after cube front
- glBindTexture(GL_TEXTURE_2D,haze);
- glBegin(GL_QUADS); 
- glTexCoord2d(1.0,1.0);
- glVertex3f( (windowwidth()/SKY_SCALE), (windowheight()/SKY_SCALE),-SKY_DISTANCE); 
- glTexCoord2d(0.0,1.0);
- glVertex3f( -(windowwidth()/SKY_SCALE), (windowheight()/SKY_SCALE),-SKY_DISTANCE); 
- glTexCoord2d(0.0,0.0);
- glVertex3f( -(windowwidth()/SKY_SCALE), -(windowheight()/SKY_SCALE),-SKY_DISTANCE); 
- glTexCoord2d(1.0,0.0);
- glVertex3f( (windowwidth()/SKY_SCALE), -(windowheight()/SKY_SCALE),-SKY_DISTANCE); 
- glEnd();
-}
-
-void floor(GLuint grnd)
-{ //Modelled after cube front
-    glBindTexture(GL_TEXTURE_2D, grnd);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // left of cube
     glBegin(GL_QUADS);
-    glTexCoord2d(100.0, 100.0);
-    glVertex3f(MAZE_EXTREME_LEFT/2, -HALF_CUBE, -MAZE_EXTREME_LEFT / 2);
-    glTexCoord2d(0.0, 100.0);
-    glVertex3f(-MAZE_EXTREME_LEFT/2, -HALF_CUBE, -MAZE_EXTREME_LEFT / 2);
+    glTexCoord2d(1.0, 1.0);
+    glVertex3f(x - HALF_CUBE, WALL_HT / 2, z + HALF_CUBE); // Top Right Of The Quad (Left)
+    glTexCoord2d(0.0, 1.0);
+    glVertex3f(x - HALF_CUBE, WALL_HT / 2, z - HALF_CUBE); // Top Left Of The Quad (Left)
     glTexCoord2d(0.0, 0.0);
-    glVertex3f(-MAZE_EXTREME_LEFT/2, -HALF_CUBE, MAZE_EXTREME_LEFT / 2);
-    glTexCoord2d(100.0, 0.0);
-    glVertex3f(MAZE_EXTREME_LEFT/2, -HALF_CUBE, MAZE_EXTREME_LEFT / 2);
+    glVertex3f(x - HALF_CUBE, -WALL_HT / 2, z - HALF_CUBE); // Bottom Left Of The Quad (Left)
+    glTexCoord2d(1.0, 0.0);
+    glVertex3f(x - HALF_CUBE, -WALL_HT / 2, z + HALF_CUBE); // Bottom Right Of The Quad (Left)
     glEnd();
 }
 
-void make_solution() //We don't use that extra +1 in the Y-dimension
-{    
-    maze_innards.resize(XSIZE);
+void wall_horizontal(GLfloat x, GLfloat y, GLfloat z, GLuint texture = 1) //Draws a cube centered at (x,y,z)
+{
+    glBindTexture(GL_TEXTURE_2D, texture);
 
-    for (int x = 0; x < XSIZE; x++) {
-        maze_innards[x].resize(YSIZE);
-        for (int y = 0; y < YSIZE; y++) {
-            maze_innards[x][y] = SOLUTION_PATH;
-        }
-    }
-    maze_innards[3][3] = NO_PATH;
+    // Back
+    glBegin(GL_QUADS);
+    glTexCoord2d(1.0,1.0); 
+    glVertex3f(x + HALF_CUBE, WALL_HT / 2,z-HALF_CUBE); // Top Right Of The Quad (Back)
+    glTexCoord2d(0.0,1.0); 
+    glVertex3f(x - HALF_CUBE, WALL_HT / 2,z-HALF_CUBE); // Top Left Of The Quad (Back)
+    glTexCoord2d(0.0,0.0); 
+    glVertex3f(x - HALF_CUBE,-WALL_HT/2,z-HALF_CUBE); // Bottom Left Of The Quad (Back)
+    glTexCoord2d(1.0,0.0); 
+    glVertex3f(x + HALF_CUBE,-WALL_HT / 2,z-HALF_CUBE); // Bottom Right Of The Quad (Back)
+    glEnd();
 }
 
-void print_maze() //Renders the necessary OpenGL cubes
+void sky(GLuint haze)
+{ 
+    //Modelled after cube front
+     glBindTexture(GL_TEXTURE_2D,haze);
+     glBegin(GL_QUADS); 
+     glTexCoord2d(1.0,1.0);
+     glVertex3f( (windowwidth()/SKY_SCALE), (windowheight()/SKY_SCALE),-SKY_DISTANCE); 
+     glTexCoord2d(0.0,1.0);
+     glVertex3f( -(windowwidth()/SKY_SCALE), (windowheight()/SKY_SCALE),-SKY_DISTANCE); 
+     glTexCoord2d(0.0,0.0);
+     glVertex3f( -(windowwidth()/SKY_SCALE), -(windowheight()/SKY_SCALE),-SKY_DISTANCE); 
+     glTexCoord2d(1.0,0.0);
+     glVertex3f( (windowwidth()/SKY_SCALE), -(windowheight()/SKY_SCALE),-SKY_DISTANCE); 
+     glEnd();
+}
+
+void floor(GLuint grnd)
+{   
+    //Modelled after cube front
+    glBindTexture(GL_TEXTURE_2D, grnd);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    
+    glBegin(GL_QUADS);
+    glTexCoord2d(10.0, 10.0);
+    glVertex3f(MAZE_EXTREME_LEFT+ XSIZE*FULL_CUBE - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP);
+    glTexCoord2d(0.0, 10.0);
+    glVertex3f(MAZE_EXTREME_LEFT - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP);
+    glTexCoord2d(0.0, 0.0);
+    glVertex3f(MAZE_EXTREME_LEFT - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP + YSIZE * FULL_CUBE);
+    glTexCoord2d(10.0, 0.0);
+    glVertex3f(MAZE_EXTREME_LEFT + XSIZE * FULL_CUBE - 3.7, -HALF_CUBE, MAZE_EXTREME_TOP + YSIZE * FULL_CUBE);
+    glEnd();
+}
+
+
+void print_maze(GLuint *walls) //Renders the necessary OpenGL cubes
 {
  int x,y; 
- for(x=0; x<XSIZE ; ++x ) //Print a border
- {
-  cube_vertical(MAZE_EXTREME_LEFT+HALF_CUBE+((GLfloat)x*FULL_CUBE),
-  0.0,
-  MAZE_EXTREME_TOP+HALF_CUBE);
 
-  cube_vertical(MAZE_EXTREME_LEFT+HALF_CUBE+((GLfloat)x*FULL_CUBE),
-  0.0,
-  MAZE_EXTREME_TOP+HALF_CUBE+FULL_CUBE+(YSIZE*(FULL_CUBE)) );
- } 
- for(y=0; y<YSIZE ; ++y ) //Maze proper
+ for(y=0; y<YSIZE*2 ; ++y ) //Maze proper
  {
   for(x=0; x<XSIZE ; ++x )
   {
-   if(maze_innards[x][y]==NO_PATH)
-   {
-    cube_vertical(LEFTMOST_CUBE_CENTER+((GLfloat)x*FULL_CUBE),
-    0.0,
-    MAZE_EXTREME_TOP+HALF_CUBE+FULL_CUBE+((GLfloat)y*FULL_CUBE)); 
-   }
+      if (y % 2 == 0 && WALL_TEXTURES[y][x]) {
+          wall_horizontal(LEFTMOST_CUBE_CENTER + ((GLfloat)x * FULL_CUBE),
+              0.0,
+              MAZE_EXTREME_TOP + HALF_CUBE + ((GLfloat)(y / 2) * FULL_CUBE), walls[WALL_TEXTURES[y][x] - 1]);
+      }
+
+      else if (y % 2 == 1 && WALL_TEXTURES[y][x]) {
+          wall_vertical(LEFTMOST_CUBE_CENTER + ((GLfloat)x * FULL_CUBE),
+              0.0,
+              MAZE_EXTREME_TOP + HALF_CUBE + ((GLfloat)(y / 2) * FULL_CUBE), walls[WALL_TEXTURES[y][x] - 1]);
+      }
   }
  }
 }
@@ -285,39 +240,42 @@ bool collide() //Is player in a state of collision?
 {
  int x,y;
 
- //Walls...
- if(x_at>=MAZE_EXTREME_LEFT-COLLIDE_MARGIN && 
-   x_at<=MAZE_EXTREME_LEFT+XSIZE*FULL_CUBE+COLLIDE_MARGIN)
+ //Invisible Walls...
+ if(x_at>=MAZE_EXTREME_LEFT-COLLIDE_MARGIN - FULL_CUBE && 
+   x_at<=MAZE_EXTREME_LEFT+(1+XSIZE)*FULL_CUBE+COLLIDE_MARGIN)
  {
-  if( y_at<=(MAZE_EXTREME_TOP+FULL_CUBE)+COLLIDE_MARGIN && 
-    y_at>=MAZE_EXTREME_TOP-COLLIDE_MARGIN)
+  if( y_at<=MAZE_EXTREME_TOP+COLLIDE_MARGIN - FULL_CUBE|| 
+    y_at>=MAZE_EXTREME_TOP+(1+YSIZE)*FULL_CUBE-COLLIDE_MARGIN)
   {
    return 1; 
   }
-
-  if(y_at<=(MAZE_EXTREME_TOP+FULL_CUBE)+FULL_CUBE+(YSIZE*FULL_CUBE)+COLLIDE_MARGIN && 
-     y_at>= MAZE_EXTREME_TOP+FULL_CUBE+(YSIZE*FULL_CUBE)-COLLIDE_MARGIN)
-  {
-   return 1;
-  }
+ }
+ else {
+    return 1;
  }
 
  //Maze proper
- for(y=0; y<YSIZE ; ++y )
+ for (y = 0; y < YSIZE * 2; ++y)
  {
-  for(x=0; x<XSIZE ; ++x )
-  {
-   if(maze_innards[x][y]==NO_PATH)
-   {
-    if( x_at>=MAZE_EXTREME_LEFT+x*FULL_CUBE-COLLIDE_MARGIN && 
-      x_at<=MAZE_EXTREME_LEFT+FULL_CUBE+x*FULL_CUBE+COLLIDE_MARGIN && 
-      y_at>=MAZE_EXTREME_TOP+(y+1)*FULL_CUBE-COLLIDE_MARGIN && 
-      y_at<=MAZE_EXTREME_TOP+(y+2)*FULL_CUBE+COLLIDE_MARGIN )   
-    {
-     return 1;
-    }
-   }
-  }
+     for (x = 0; x < XSIZE; ++x)
+     {
+         if (y%2 == 0 && WALL_TEXTURES[y][x]) {
+             if (y_at <= MAZE_EXTREME_TOP + (y / 2) * FULL_CUBE + COLLIDE_MARGIN &&
+                 y_at >= MAZE_EXTREME_TOP + (y / 2) * FULL_CUBE - COLLIDE_MARGIN&&
+                 x_at >= MAZE_EXTREME_LEFT + x * FULL_CUBE - COLLIDE_MARGIN &&
+                 x_at <= MAZE_EXTREME_LEFT + (x+1) * FULL_CUBE + COLLIDE_MARGIN) {
+                 return 1;
+             }             
+         }
+         else if (y%2 == 1 && WALL_TEXTURES[y][x]) {
+             if (x_at + 3.7 <= MAZE_EXTREME_LEFT + x * FULL_CUBE + COLLIDE_MARGIN &&
+                 x_at + 3.7 >= MAZE_EXTREME_LEFT + x * FULL_CUBE - COLLIDE_MARGIN&&
+                 y_at >= MAZE_EXTREME_TOP + (y/2) * FULL_CUBE - COLLIDE_MARGIN &&
+                 y_at <= MAZE_EXTREME_TOP + (y/2 + 1) * FULL_CUBE + COLLIDE_MARGIN) {
+                 return 1;
+             }
+         }
+     }
  }
  return 0;
 }
@@ -343,16 +301,18 @@ void move(GLfloat amt) //Move, incorporating collision and bounceback
 void drawscene()
 {  
  static bool init=0;
- static GLuint walls; /*Texture for the cube*/
+ static GLuint textureNums = TEXTURE_PATHS.size();
+ static GLuint* walls = new GLuint[textureNums]; /*Textures for the cube*/
  static GLuint haze; /*Texture for the sky*/
  static GLuint grnd; /*Texture for the sky*/
  
  if(!init)
  { 
   init=1;
-  walls=maketex(TEXTURE_FILE,TEXTURE_SIZE,TEXTURE_SIZE);
+  for(int i=0;i<textureNums;i++)
+    walls[i] = maketex(&TEXTURE_PATHS[i][0], TEXTURE_SIZE, TEXTURE_SIZE);
   haze=maketex(SKY_FILE,SKY_SIZE_X,SKY_SIZE_Y);
-  grnd=maketex(FLOOR_FILE, TEXTURE_SIZE, TEXTURE_SIZE);
+  grnd=walls[textureNums-1];
  }
  
  if(camera_y<=0.0f && xin && yin)
@@ -368,12 +328,12 @@ void drawscene()
  glLoadIdentity(); // Make sure we're no longer rotated.
  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); // Clear screen and depth buffer
  sky(haze); //Draw sky
- glBindTexture(GL_TEXTURE_2D,walls);
+
  gluLookAt(x_at,camera_y,y_at,x_at+cos(rot),camera_y,y_at+sin(rot),0.0,1.0,0.0);
  if(camera_y>0.0) camera_y-=CAMERA_SINK;
- glBegin(GL_QUADS); // Draw the cube (6 faces)
- print_maze();
- glEnd(); // Done Drawing The Cube
+
+ print_maze(walls);// Draw the walls
+
  floor(grnd); //Draw floor
 
  glutSwapBuffers();
@@ -449,9 +409,7 @@ int main(int argc, char **argv)
  glewInit();
 
  srand(time(0));
-
- make_solution();
- 
+ parseMaze(XSIZE,YSIZE, "maze1.txt");
  glutMainLoop(); 
 
  return 0;

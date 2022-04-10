@@ -21,7 +21,7 @@ vector<string> tokenize(string s, string del = " ")
 }
 
 void parseMaze(GLint& pXSIZE, GLint& pYSIZE, string maze_path){
-    
+    maze_path = "./resources/" + maze_path;
     ifstream infile(maze_path);
 
     int textureNum=2, xSize=pXSIZE, ySize=pYSIZE;
@@ -93,4 +93,5 @@ void parseMaze(GLint& pXSIZE, GLint& pYSIZE, string maze_path){
 
     FULL_CUBE = cell;
     HALF_CUBE = cell / 2;
+    WALL_HT = ht;
 }
