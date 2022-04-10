@@ -7,4 +7,4 @@ In this homework, we write an OpenGL application that lets a user navigate a maz
 In the last part of the assignment (Part 3) you will incorporate what you have learned in the first 2 parts to create your first “mini” OpenGL game. The idea is that in this homework assignment you will do everything in OpenGL, and in the next 3 assignments you will write a
 software rasterizer that will do this in software.<br/><br/>
 See complete description [here](https://drive.google.com/file/d/1UQXpE8SCL0bJqoIxq3mdPhcq5qJDQ0gV/view?usp=sharing)<br/>
-See demo video here [here](https://www.youtube.com/)
+See demo video here [here](https://youtu.be/O8dUZq9Oty0)
